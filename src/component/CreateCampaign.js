@@ -4,6 +4,7 @@ import useProposeCampaign from "../hooks/useProposeCampaign";
 import { useConnection } from "../context/connection";
 import { supportedChains } from "../constants";
 import { parseEther } from "ethers";
+import { toast } from "react-toastify";
 
 const CreateCampaign = () => {
     let [isOpen, setIsOpen] = useState(false);
@@ -16,6 +17,7 @@ const CreateCampaign = () => {
     const proposeCampaign = useProposeCampaign();
 
     function closeModal() {
+        if (sendingTx) return;
         setIsOpen(false);
     }
 
@@ -25,8 +27,8 @@ const CreateCampaign = () => {
 
     const handleProposeCampaign = async () => {
         if (!title || !goal || !duration)
-            return alert("Please provide all valeus");
-        if (!isActive) return alert("please, connect");
+            return toast.info("Please provide all values");
+        if (!isActive) return toast.info("please, connect");
         try {
             setSendingTx(true);
             const tx = await proposeCampaign(
@@ -35,15 +37,16 @@ const CreateCampaign = () => {
                 duration * 60
             );
             const receipt = await tx.wait();
-            if (receipt.status === 0) return alert("tx failed");
+            if (receipt.status === 0) return toast.error("tx failed");
 
-            alert("campaign created!!");
+            toast.success("campaign created!!");
+            setIsOpen(false);
         } catch (error) {
             console.log("error: ", error);
             if (error.info.error.code === 4001) {
-                return alert("You rejected the request");
+                return toast.error("You rejected the request");
             }
-            alert("something went wrong");
+            toast.error("something went wrong");
         } finally {
             setSendingTx(false);
         }
